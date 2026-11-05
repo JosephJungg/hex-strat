@@ -4,7 +4,9 @@ Usage:
     python -m hexstrat.simulate --games 100 --seed 42 --out data/raw
 
 Writes, per run:
-    <out>/moves_<run_id>.parquet   one row per move (see MOVE_COLUMNS)
+    <out>/moves_<run_id>.parquet        one row per move (see MOVE_COLUMNS)
+    <out>/board_tiles_<run_id>.parquet  one row per (game, node, adjacent land tile)
+    <out>/board_ports_<run_id>.parquet  one row per (game, port node)
     <out>/run_<run_id>.json        run record: lineup, versions, seed, game count, date
 """
 
@@ -89,9 +91,32 @@ def _snapshot(game: Game, color: Color) -> dict:
     return row
 
 
-def play_logged_game(players, seed: int, run_id: str) -> tuple[list[dict], Color | None]:
+def board_rows(game: Game, run_id: str) -> tuple[list[dict], list[dict]]:
+    """The board is reshuffled every game, so record it: one row per (node, adjacent land tile), and port nodes."""
+    catan_map = game.state.board.map
+    tiles = []
+    for tile in catan_map.land_tiles.values():
+        for node_id in tile.nodes.values():
+            tiles.append(
+                {
+                    "run_id": run_id,
+                    "game_id": game.id,
+                    "node_id": node_id,
+                    "tile_id": tile.id,
+                    "resource": tile.resource or "DESERT",
+                    "number": tile.number,
+                }
+            )
+    ports = [
+        {"run_id": run_id, "game_id": game.id, "node_id": node_id, "port_resource": resource or "ANY"}
+        for resource, node_ids in catan_map.port_nodes.items()
+        for node_id in node_ids
+    ]
+    return tiles, ports
+
+
+def play_and_log(game: Game, run_id: str) -> tuple[list[dict], Color | None]:
     """Play one game, returning its move rows and the winning color (None if it hit the turn limit)."""
-    game = Game(players, seed=seed)  # Game shuffles seat order using the seed
     game_id = game.id
     rows: list[dict] = []
 
@@ -138,9 +163,15 @@ def simulate(num_games: int, seed: int, lineup: list[str], out_dir: Path) -> Run
     game_seeds = random.Random(seed).sample(range(2**31), num_games)
 
     all_rows: list[dict] = []
+    tile_rows: list[dict] = []
+    port_rows: list[dict] = []
     for game_seed in game_seeds:
         players = [BOT_TYPES[bot](color) for bot, color in zip(lineup, colors)]
-        rows, winner = play_logged_game(players, game_seed, run_id)
+        game = Game(players, seed=game_seed)  # Game shuffles seat order using the seed
+        tiles, ports = board_rows(game, run_id)
+        tile_rows.extend(tiles)
+        port_rows.extend(ports)
+        rows, winner = play_and_log(game, run_id)
         all_rows.extend(rows)
         if winner is not None:
             record.games_finished += 1
@@ -149,6 +180,8 @@ def simulate(num_games: int, seed: int, lineup: list[str], out_dir: Path) -> Run
 
     out_dir.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(all_rows, columns=MOVE_COLUMNS).to_parquet(out_dir / f"moves_{run_id}.parquet", index=False)
+    pd.DataFrame(tile_rows).astype({"number": "Int64"}).to_parquet(out_dir / f"board_tiles_{run_id}.parquet", index=False)
+    pd.DataFrame(port_rows).to_parquet(out_dir / f"board_ports_{run_id}.parquet", index=False)
     (out_dir / f"run_{run_id}.json").write_text(json.dumps(asdict(record), indent=2))
     return record
 

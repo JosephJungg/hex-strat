@@ -23,6 +23,8 @@ Tested on Python 3.13 with Catanatron 3.2.1. The PyPI package is the core engine
 Bots: `R` = random, `W` = weighted random. Seat order is shuffled per game. Each run writes:
 
 - `moves_<run_id>.parquet`: one row per move, with the acting player's state just before it.
+- `board_tiles_<run_id>.parquet`: one row per (game, node, adjacent land tile). The board is reshuffled every game, so a node id alone says nothing about a spot.
+- `board_ports_<run_id>.parquet`: one row per (game, port node).
 - `run_<run_id>.json`: run record with lineup, seed, game count, Catanatron version, date and wins per bot.
 
 | Column | Meaning |
@@ -36,12 +38,32 @@ Bots: `R` = random, `W` = weighted random. Seat order is shuffled per game. Each
 
 100 games take about 2 seconds and give about 87,000 move rows.
 
-## Next: the minimal end-to-end slice
+## End-to-end slice
 
-Before building more infrastructure, get one thin path working all the way through:
+One thin path from simulation to a bot that plays, run from the repo root:
 
-1. **Data**: 100 games from `hexstrat.simulate` (done).
-2. **Warehouse**: load the Parquet file into DuckDB.
-3. **dbt**: one model, `fct_opening_placements`, with one row per opening settlement (game, player, seat, node, won).
-4. **Model**: a trivial placement scorer, such as the win rate per node, split by `game_id`.
-5. **Bot**: a player that picks the highest-scoring node in the opening and plays randomly afterwards; compare its win rate against the random bot.
+```bash
+.venv/bin/python -m hexstrat.simulate --games 1000 --seed 42 --out data/raw   # ~18 s
+.venv/bin/python -m hexstrat.load                                             # Parquet -> DuckDB raw schema
+(cd dbt && ../.venv/bin/dbt build --profiles-dir .)                            # models + 13 tests
+.venv/bin/python -m hexstrat.scorer                                           # train, report held-out metrics
+.venv/bin/python -m hexstrat.bot --games 2000 --opponents R                   # win rate with 95% CI
+```
+
+| Stage | What it does |
+| --- | --- |
+| `hexstrat.load` | Loads raw files into `warehouse/hexstrat.duckdb`, schema `raw` |
+| `stg_*` (dbt) | Typed staging views over raw tables; fault handling lands here in weeks 5–7 |
+| `int_node_features` (dbt) | Per game and node: total pips, distinct resources, pips per resource, port |
+| `fct_opening_placements` (dbt) | One row per opening settlement in finished games, with its features and `won` |
+| `hexstrat.scorer` | Smoothed win rate by (pips, distinct resources); train/test split by `game_id` |
+| `hexstrat.bot` | Picks the best-scoring opening spot, plays randomly afterwards |
+
+The bot computes node features in Python (`hexstrat/features.py`) while training data computes them in SQL; `tests/test_features.py` runs dbt and checks both agree.
+
+### First results (1,000 training games, Nov 5 2026)
+
+- Spot quality predicts winning: players whose opening spot touches 13+ pips won 52% of games; spots touching no numbers won 8%.
+- Scorer on 182 held-out games: AUC 0.69, log loss 0.523 vs 0.562 for always predicting 25%.
+- Bot vs 3 random bots: **48.4% win rate** (95% CI 46.2–50.5%, 2,000 games), vs 25% chance.
+- Bot vs 3 weighted-random bots: 23.8% (95% CI 22.0–25.7%), no better than chance. Good openings don't make up for random play afterwards.

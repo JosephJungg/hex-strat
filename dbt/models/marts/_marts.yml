@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: fct_opening_placements
+    description: One row per opening settlement in finished games; training data for the placement scorer.
+    columns:
+      - name: game_id
+        tests: [not_null]
+      - name: placement_number
+        tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2]
+      - name: pips
+        tests: [not_null]

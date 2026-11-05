@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: stg_moves
+    columns:
+      - name: game_id
+        tests: [not_null]
+      - name: player
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [RED, BLUE, WHITE, ORANGE]
+      - name: action_type
+        tests: [not_null]
+      - name: won
+        tests: [not_null]
+  - name: stg_board_tiles
+    columns:
+      - name: resource
+        tests:
+          - accepted_values:
+              arguments:
+                values: [WOOD, BRICK, SHEEP, WHEAT, ORE, DESERT]
+      - name: pips
+        tests: [not_null]
+  - name: stg_board_ports
+    columns:
+      - name: port_resource
+        tests:
+          - accepted_values:
+              arguments:
+                values: [WOOD, BRICK, SHEEP, WHEAT, ORE, ANY]
