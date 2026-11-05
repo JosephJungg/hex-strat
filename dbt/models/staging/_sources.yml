@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Simulator output loaded as-is by hexstrat.load
+    tables:
+      - name: moves
+        description: One row per move, with the acting player's state just before it
+      - name: board_tiles
+        description: One row per (game, node, adjacent land tile); the board is reshuffled every game
+      - name: board_ports
+        description: One row per (game, port node)
+      - name: runs
+        description: One row per simulation run

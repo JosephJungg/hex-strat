@@ -1,0 +1,8 @@
+# Local development warehouse. Snowflake gets its own target in week 8.
+hexstrat:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('HEXSTRAT_DB', '../warehouse/hexstrat.duckdb') }}"
+      threads: 4

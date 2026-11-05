@@ -221,3 +221,12 @@ __marimo__/
 
 # Generated game data
 data/
+
+# Local DuckDB warehouse and dbt build output
+warehouse/
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+logs/
+artifacts/
+dbt/.user.yml
