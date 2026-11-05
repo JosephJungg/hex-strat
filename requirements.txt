@@ -1,0 +1,8 @@
+# Pinned in week 1. Catanatron 3.2.1 installs cleanly on Python 3.13.
+# The PyPI package is the core engine only (no catanatron-play CLI);
+# hexstrat drives games through the Python API instead.
+catanatron==3.2.1
+networkx==3.7
+pandas==3.1.1
+pyarrow==26.0.1
+pytest==9.2.0
