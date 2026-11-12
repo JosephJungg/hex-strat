@@ -61,9 +61,12 @@ One thin path from simulation to a bot that plays, run from the repo root:
 
 The bot computes node features in Python (`hexstrat/features.py`) while training data computes them in SQL; `tests/test_features.py` runs dbt and checks both agree.
 
-### First results (1,000 training games, Nov 5 2026)
+### Results (1,000 training games, seed 42)
 
-- Spot quality predicts winning: players whose opening spot touches 13+ pips won 52% of games; spots touching no numbers won 8%.
+- Spot quality predicts winning: players whose opening spot touches 13+ pips won 52% of games; spots touching no numbers won 8% (Nov 5 run).
 - Scorer on 182 held-out games: AUC 0.69, log loss 0.523 vs 0.562 for always predicting 25%.
-- Bot vs 3 random bots: **48.4% win rate** (95% CI 46.2–50.5%, 2,000 games), vs 25% chance.
-- Bot vs 3 weighted-random bots: 23.8% (95% CI 22.0–25.7%), no better than chance. Good openings don't make up for random play afterwards.
+- Bot vs 3 random bots: **47.4% win rate** (95% CI 45.2–49.5%, 2,000 games; Nov 12 run).
+- Same-seat control: a random player in the bot's seat, with the same game seeds, won 24.8% (95% CI 23.0–26.8%, 1,998 finished games). The bot differs from it only in its two opening settlements, so the gap comes from placement.
+- Bot vs 3 weighted-random bots: 23.8% (95% CI 22.0–25.7%; Nov 5 run), no better than chance. Good openings don't make up for random play afterwards.
+
+Simulation is seeded, but bot moves after the opening use Python's unseeded global RNG, so evaluation results vary slightly between runs (the Nov 5 run gave 48.4% vs random bots).
