@@ -15,6 +15,20 @@ models:
         tests: [not_null]
       - name: won
         tests: [not_null]
+      - name: move_index
+        tests: [not_null]
+      - name: points
+        tests: [not_null]
+      - name: res_wood
+        tests: [not_null]
+      - name: res_brick
+        tests: [not_null]
+      - name: res_sheep
+        tests: [not_null]
+      - name: res_wheat
+        tests: [not_null]
+      - name: res_ore
+        tests: [not_null]
   - name: stg_board_tiles
     columns:
       - name: resource
