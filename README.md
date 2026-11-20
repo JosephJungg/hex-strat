@@ -1,6 +1,6 @@
 # hex-strat
 
-Simulated hex-board strategy games → a tested data pipeline → a model that recommends opening settlement placements, measured by a bot's win rate against baseline bots.
+Simulated Catan games → a tested data pipeline → a model that recommends opening settlement placements, measured by a bot's win rate against baseline bots.
 
 Games are simulated with [Catanatron](https://github.com/bcollazo/catanatron), an open-source engine. This project is not affiliated with the board game's publisher.
 
