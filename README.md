@@ -131,7 +131,7 @@ Seat-to-colour is fixed within a game, so `player` is exact. Points change only 
 
 Win rate by color in `fct_opening_placements`:
 
-| Player | Clean | Damaged, after cleaning |
+| Player | Clean | Damaged, then Cleaned |
 | --- | --- | --- |
 | BLUE (weighted random) | 44.29% | 44.29% |
 | RED | 18.80% | 18.79% |
