@@ -129,7 +129,7 @@ Seat-to-colour is fixed within a game, so `player` is exact. Points change only 
 
 ### Impact on results
 
-Win rate by colour in `fct_opening_placements`:
+Win rate by color in `fct_opening_placements`:
 
 | Player | Clean | Damaged, after cleaning |
 | --- | --- | --- |
