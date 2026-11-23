@@ -84,6 +84,7 @@ def log_loss(labels, probs) -> float:
 def train(db: Path) -> tuple[PlacementScorer, dict]:
     with duckdb.connect(str(db), read_only=True) as con:
         df = con.sql("select game_id, pips, n_resources, won from marts.fct_opening_placements").df()
+    df["pips"] = df["pips"].astype(int)
     test_mask = df["game_id"].map(is_test_game)
     train_df, test_df = df[~test_mask], df[test_mask]
     scorer = PlacementScorer.fit(train_df)
