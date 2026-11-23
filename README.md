@@ -61,15 +61,17 @@ One thin path from simulation to a bot that plays, run from the repo root:
 
 The bot computes node features in Python (`hexstrat/features.py`) while training data computes them in SQL; `tests/test_features.py` runs dbt and checks both agree.
 
-### Results (1,000 training games, seed 42)
+### Results (10,000 simulated games, seed 42)
 
-- Spot quality predicts winning: players whose opening spot touches 13+ pips won 52% of games; spots touching no numbers won 8%.
-- Scorer on 182 held-out games: AUC 0.69, log loss 0.523 vs 0.562 for always predicting 25%.
-- Bot vs 3 random bots: **47.4% win rate** (95% CI 45.2–49.5%, 2,000 games).
+- Spot quality predicts winning: opening spots touching 13+ pips belonged to the eventual winner 50% of the time; spots touching no numbers, 4%.
+- Scorer on 2,045 held-out games (trained on 7,954): AUC 0.69, log loss 0.520 vs 0.562 for always predicting 25%.
+- Bot vs 3 random bots: **76.3% win rate** (95% CI 74.3–78.1%, 2,000 games).
 - Same-seat control: a random player in the bot's seat, with the same game seeds, won 24.8% (95% CI 23.0–26.8%, 1,998 finished games). The bot differs from it only in its two opening settlements, so the gap comes from placement.
-- Bot vs 3 weighted-random bots: 23.8% (95% CI 22.0–25.7%), no better than chance. Good openings don't make up for random play afterwards.
+- Bot vs 3 weighted-random bots: **54.0%** (95% CI 51.8–56.1%, 2,000 games), still about twice chance against stronger opponents.
 
-Simulation is seeded, but bot moves after the opening use Python's unseeded global RNG, so evaluation results vary slightly between runs (an earlier run gave 48.4% vs random bots).
+Simulation is seeded, but bot moves after the opening use Python's unseeded global RNG, so evaluation results vary slightly between runs.
+
+An earlier version of these results reported 47.4% vs random bots and 23.8% vs weighted-random bots. Those runs had a bug: the scorer saved its keys with float pips (`"6.0|3"`) while the bot looked them up with integer pips (`"6|3"`), so every spot scored the same and the bot just took the first legal settlement. Fixed in `bf74c78`.
 
 ## Data quality
 
