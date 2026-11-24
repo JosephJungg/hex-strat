@@ -6,3 +6,12 @@ hexstrat:
       type: duckdb
       path: "{{ env_var('HEXSTRAT_DB', '../warehouse/hexstrat.duckdb') }}"
       threads: 4
+    snowflake:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      warehouse: HEXSTRAT_WH
+      database: HEXSTRAT
+      schema: RAW
+      threads: 4  
