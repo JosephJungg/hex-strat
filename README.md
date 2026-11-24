@@ -73,6 +73,33 @@ Simulation is seeded, but bot moves after the opening use Python's unseeded glob
 
 An earlier version of these results reported 47.4% vs random bots and 23.8% vs weighted-random bots. Those runs had a bug: the scorer saved its keys with float pips (`"6.0|3"`) while the bot looked them up with integer pips (`"6|3"`), so every spot scored the same and the bot just took the first legal settlement. Fixed in `bf74c78`.
 
+## Running on Snowflake
+
+The same dbt project builds on Snowflake. DuckDB stays the local development target (`dev`, the default); Snowflake is the `snowflake` target.
+
+**One-time setup in Snowflake:** an X-Small warehouse `HEXSTRAT_WH` with a 60-second auto-suspend, a database `HEXSTRAT` with a `RAW` schema, and a resource monitor capping monthly credits. dbt creates the `STAGING`, `INTERMEDIATE` and `MARTS` schemas itself.
+
+**Authentication** is by key pair, so scripts and dbt never prompt for a password or MFA. The private key stays in `~/.snowflake/`, outside the repo, and both the loader and `dbt/profiles.yml` read these environment variables:
+
+```bash
+export SNOWFLAKE_ACCOUNT="<orgname>-<accountname>"
+export SNOWFLAKE_USER="<username>"
+export SNOWFLAKE_PRIVATE_KEY_PATH="$HOME/.snowflake/rsa_key.p8"
+```
+
+**Load and build:**
+
+```bash
+.venv/bin/python -m hexstrat.load_snowflake --src data/raw     # Parquet -> HEXSTRAT.RAW
+(cd dbt && ../.venv/bin/dbt build --target snowflake)          # models + tests on Snowflake
+```
+
+`hexstrat.load_snowflake` uploads each table's Parquet files to an internal stage with `PUT`, creates the table from the files' schema with `INFER_SCHEMA`, and fills it with `COPY INTO`. `run_*.json` isn't loaded, since no model uses it yet.
+
+**Result on the 10,000-game run:** the raw tables match DuckDB row for row (8,447,807 moves, 1,140,000 tile rows, 180,000 port rows), all 26 models and tests pass, and `fct_opening_placements` matches the DuckDB build exactly on row count and column totals.
+
+Not yet in the cloud: raw files go through Snowflake's internal stage rather than Azure Blob Storage, and runs are started by hand rather than by Airflow.
+
 ## Data quality
 
 To check that the pipeline survives messy input, `hexstrat.inject_faults` damages a copy of a run's raw files and logs every fault it injects. The damaged copy goes through the same load and dbt steps into a second warehouse, and `notebooks/fault_report.ipynb` checks the result against the clean warehouse, using the fault log as ground truth.
